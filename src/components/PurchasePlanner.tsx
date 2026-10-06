@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Calculator, DollarSign, Building2, Wallet, CheckCircle2, AlertCircle
+  Calculator, DollarSign, Building2, Wallet, CheckCircle2, AlertCircle, ArrowLeft
 } from 'lucide-react';
 import { PropertyTransaction, PropertyType, MortgagePlanInput, SellerProceedsInput } from '../types/property';
 import { 
@@ -11,11 +11,17 @@ import {
 interface PurchasePlannerProps {
   selectedProperty: PropertyTransaction | null;
   onClearSelectedProperty: () => void;
+  onGoBack?: () => void;
+  hasPreviousView?: boolean;
+  previousPropertyTitle?: string;
 }
 
 export const PurchasePlanner: React.FC<PurchasePlannerProps> = ({
   selectedProperty,
-  onClearSelectedProperty
+  onClearSelectedProperty,
+  onGoBack,
+  hasPreviousView,
+  previousPropertyTitle
 }) => {
   const [plannerMode, setPlannerMode] = useState<'buy' | 'sell'>('buy');
 
@@ -44,12 +50,53 @@ export const PurchasePlanner: React.FC<PurchasePlannerProps> = ({
     holdingPeriodYears: 5
   });
 
+  // Keep inputs synchronized if a new property is selected
+  useEffect(() => {
+    if (selectedProperty) {
+      setBuyerInput((prev) => ({
+        ...prev,
+        propertyPrice: selectedProperty.price,
+        propertyType: selectedProperty.type,
+        cpfGrantExpected: selectedProperty.type === 'HDB' ? 50000 : 0
+      }));
+      setSellerInput((prev) => ({
+        ...prev,
+        sellingPrice: selectedProperty.price
+      }));
+    }
+  }, [selectedProperty]);
+
   // Calculate results
   const buyerResult = calculateMortgagePlan(buyerInput);
   const sellerResult = calculateSellerProceeds(sellerInput);
 
   return (
     <div className="p-4 sm:p-8 max-w-5xl mx-auto space-y-6">
+      {/* Top back navigation button if arrived from project/property page */}
+      {onGoBack && (
+        <div className="flex items-center justify-between pb-1 -mt-2">
+          <button
+            onClick={onGoBack}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold shadow-xs transition-all group"
+          >
+            <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
+            <span>
+              {selectedProperty
+                ? `Back to ${selectedProperty.title}`
+                : previousPropertyTitle
+                ? `Back to ${previousPropertyTitle}`
+                : 'Back to Previous View'}
+            </span>
+          </button>
+
+          {selectedProperty && (
+            <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
+              Customized calculations for {selectedProperty.title}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
@@ -91,23 +138,40 @@ export const PurchasePlanner: React.FC<PurchasePlannerProps> = ({
 
       {/* Selected Property Banner if attached */}
       {selectedProperty && (
-        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-xs text-slate-800">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-rose-600 shrink-0" />
+        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-800 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-rose-100/80 text-rose-600 shrink-0">
+              <Building2 className="w-4 h-4" />
+            </div>
             <div>
-              <span className="text-slate-500">Selected Property: </span>
-              <span className="font-bold text-slate-900">{selectedProperty.title} ({selectedProperty.town})</span>
-              <span className="text-rose-600 font-mono font-bold ml-2">
-                {formatCurrency(selectedProperty.price)}
-              </span>
+              <div className="text-[11px] text-slate-500 font-medium">Selected Unit for Calculation:</div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-slate-900 text-sm">{selectedProperty.title}</span>
+                <span className="text-slate-600">({selectedProperty.town} · {selectedProperty.flatTypeOrBeds})</span>
+                <span className="text-rose-600 font-mono font-bold">
+                  {formatCurrency(selectedProperty.price)}
+                </span>
+              </div>
             </div>
           </div>
-          <button
-            onClick={onClearSelectedProperty}
-            className="text-[11px] text-slate-500 hover:text-slate-900 font-medium underline transition-colors"
-          >
-            Reset to Custom
-          </button>
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            {onGoBack && (
+              <button
+                onClick={onGoBack}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-colors shadow-xs"
+                title="Return to property details and map view"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Property Details</span>
+              </button>
+            )}
+            <button
+              onClick={onClearSelectedProperty}
+              className="text-[11px] text-slate-500 hover:text-slate-800 font-medium underline px-2 py-1 transition-colors"
+            >
+              Reset to Custom
+            </button>
+          </div>
         </div>
       )}
 

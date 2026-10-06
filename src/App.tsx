@@ -21,6 +21,10 @@ import { calculateDistanceMeters } from './utils/propertyMath';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'map' | 'trends' | 'planner'>('map');
+  const [previousView, setPreviousView] = useState<{
+    tab: 'map' | 'trends';
+    property: PropertyTransaction | null;
+  } | null>(null);
   const [transactions, setTransactions] = useState<PropertyTransaction[]>(INITIAL_TRANSACTIONS);
   const [selectedTransaction, setSelectedTransaction] = useState<PropertyTransaction | null>(null);
   const [plannerProperty, setPlannerProperty] = useState<PropertyTransaction | null>(null);
@@ -238,10 +242,37 @@ export default function App() {
       });
   }, [transactions, filters]);
 
-  // Plan purchase for specific unit
+  // Plan purchase for specific unit from project/property page
   const handleSelectForPlanner = (property: PropertyTransaction) => {
+    setPreviousView({
+      tab: activeTab === 'planner' ? 'map' : activeTab,
+      property: property
+    });
     setPlannerProperty(property);
     setActiveTab('planner');
+  };
+
+  // Return to previous view (re-opens property details modal & map/trends view)
+  const handleBackFromPlanner = useCallback(() => {
+    if (previousView) {
+      setActiveTab(previousView.tab);
+      if (previousView.property) {
+        setSelectedTransaction(previousView.property);
+      }
+    } else {
+      setActiveTab('map');
+    }
+  }, [previousView]);
+
+  // Tab switching with previous view preservation
+  const handleTabChange = (tab: 'map' | 'trends' | 'planner') => {
+    if (tab === 'planner' && activeTab !== 'planner') {
+      setPreviousView((prev) => ({
+        tab: activeTab,
+        property: prev?.property || selectedTransaction || plannerProperty
+      }));
+    }
+    setActiveTab(tab);
   };
 
   return (
@@ -249,7 +280,7 @@ export default function App() {
       {/* Top Bar Navigation */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         onDetectLocation={handleDetectLocation}
         isLocating={isLocating}
         hasLocation={userLocation?.status === 'located'}
@@ -278,6 +309,9 @@ export default function App() {
           <PurchasePlanner
             selectedProperty={plannerProperty}
             onClearSelectedProperty={() => setPlannerProperty(null)}
+            onGoBack={previousView || plannerProperty ? handleBackFromPlanner : undefined}
+            hasPreviousView={Boolean(previousView || plannerProperty)}
+            previousPropertyTitle={previousView?.property?.title || plannerProperty?.title}
           />
         )}
       </main>
