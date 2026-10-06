@@ -17,7 +17,7 @@ import {
 import { INITIAL_TRANSACTIONS } from './data/sampleTransactions';
 import { fetchHdbTransactions } from './services/dataGovService';
 import { reverseGeocode } from './services/oneMapService';
-import { calculateDistanceMeters } from './utils/propertyMath';
+import { calculateDistanceMeters, getBedroomCount } from './utils/propertyMath';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'map' | 'trends' | 'planner'>('map');
@@ -44,10 +44,11 @@ export default function App() {
     propertyTypes: ['HDB', 'CONDO', 'EC'],
     town: 'ALL',
     flatTypes: ['ALL'],
+    bedrooms: [0],
     priceMin: 200000,
     priceMax: 4500000,
-    sizeSqftMin: 400,
-    sizeSqftMax: 2500,
+    sizeSqftMin: 300,
+    sizeSqftMax: 3500,
     minRemainingLeaseYears: 0,
     tenureType: 'ALL',
     radiusKm: 5, // Default view ~5KM range
@@ -187,6 +188,14 @@ export default function App() {
           return false;
         }
 
+        // Bedroom count
+        if (filters.bedrooms && filters.bedrooms.length > 0 && !filters.bedrooms.includes(0)) {
+          const bedCount = getBedroomCount(tx.flatTypeOrBeds);
+          if (!filters.bedrooms.includes(bedCount)) {
+            return false;
+          }
+        }
+
         // Tenure
         if (filters.tenureType !== 'ALL' && tx.tenureType !== filters.tenureType) {
           return false;
@@ -323,6 +332,7 @@ export default function App() {
         userLocation={userLocation}
         onSelectForPlanner={handleSelectForPlanner}
         onRouteCalculated={(route) => setActiveRoute(route)}
+        allTransactions={transactions}
       />
     </div>
   );

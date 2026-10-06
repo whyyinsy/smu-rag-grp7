@@ -56,10 +56,20 @@ export interface OneMapRouteResult {
   errorMessage?: string;
 }
 
+export interface BedroomTransactionGroup {
+  bedroomCount: number;
+  bedroomLabel: string;
+  transactions: PropertyTransaction[];
+  avgPrice: number;
+  avgPsf: number;
+  avgSqft: number;
+}
+
 export interface FilterState {
   propertyTypes: PropertyType[];
   town: string; // 'ALL' or specific town
   flatTypes: string[]; // 'ALL' or specific types
+  bedrooms: number[]; // [0] = ALL, or [1], [2], [3], [4], [5] (where 5 represents 5+ beds)
   priceMin: number;
   priceMax: number;
   sizeSqftMin: number;

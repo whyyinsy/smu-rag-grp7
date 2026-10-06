@@ -3,7 +3,7 @@ import L from 'leaflet';
 import { 
   Search, SlidersHorizontal, MapPin, Building2, 
   RotateCcw, Compass, ArrowUpDown, ChevronRight, Eye, Navigation, Check,
-  Calendar, Layers, Sparkles
+  Calendar, Layers, Sparkles, BedDouble, Maximize2
 } from 'lucide-react';
 import { 
   PropertyTransaction, GeolocationState, FilterState, 
@@ -270,6 +270,29 @@ export const MapExplorer: React.FC<MapExplorerProps> = ({
     onFilterChange({ ...filters, propertyTypes: current });
   };
 
+  const toggleBedroomFilter = (bed: number) => {
+    if (bed === 0) {
+      onFilterChange({ ...filters, bedrooms: [0] });
+      return;
+    }
+    let current = filters.bedrooms ? filters.bedrooms.filter((b) => b !== 0) : [];
+    if (current.includes(bed)) {
+      current = current.filter((b) => b !== bed);
+      if (current.length === 0) current = [0];
+    } else {
+      current.push(bed);
+    }
+    onFilterChange({ ...filters, bedrooms: current });
+  };
+
+  const handleSizePreset = (min: number, max: number) => {
+    onFilterChange({
+      ...filters,
+      sizeSqftMin: min,
+      sizeSqftMax: max
+    });
+  };
+
   return (
     <div className="relative w-full h-[calc(100vh-3.5rem)] flex flex-col overflow-hidden bg-slate-100">
       {/* Top Floating Search & Quick Filters Bar */}
@@ -374,6 +397,44 @@ export const MapExplorer: React.FC<MapExplorerProps> = ({
           >
             EC
           </button>
+        </div>
+
+        {/* Quick Bedroom Filter */}
+        <div className="hidden md:flex items-center gap-1 p-1 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-xl shadow-md pointer-events-auto">
+          <div className="px-2 text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+            <BedDouble className="w-3.5 h-3.5 text-slate-400" />
+            <span>Beds:</span>
+          </div>
+          {[
+            { label: 'All', value: 0 },
+            { label: '1 Bed', value: 1 },
+            { label: '2 Beds', value: 2 },
+            { label: '3 Beds', value: 3 },
+            { label: '4+ Beds', value: 4 }
+          ].map((item) => {
+            const isSelected = item.value === 0
+              ? !filters.bedrooms || filters.bedrooms.length === 0 || filters.bedrooms.includes(0)
+              : filters.bedrooms && filters.bedrooms.includes(item.value);
+            return (
+              <button
+                key={item.label}
+                onClick={() => {
+                  if (item.value === 0) {
+                    onFilterChange({ ...filters, bedrooms: [0] });
+                  } else if (item.value === 4) {
+                    onFilterChange({ ...filters, bedrooms: [4, 5] });
+                  } else {
+                    onFilterChange({ ...filters, bedrooms: [item.value] });
+                  }
+                }}
+                className={`px-2 py-1 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+                  isSelected ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* More Filters Toggle */}
@@ -499,10 +560,11 @@ export const MapExplorer: React.FC<MapExplorerProps> = ({
                     propertyTypes: ['HDB', 'CONDO', 'EC'],
                     town: 'ALL',
                     flatTypes: ['ALL'],
+                    bedrooms: [0],
                     priceMin: 200000,
                     priceMax: 4500000,
-                    sizeSqftMin: 400,
-                    sizeSqftMax: 2500,
+                    sizeSqftMin: 300,
+                    sizeSqftMax: 3500,
                     minRemainingLeaseYears: 0,
                     tenureType: 'ALL',
                     radiusKm: 5,
@@ -601,6 +663,130 @@ export const MapExplorer: React.FC<MapExplorerProps> = ({
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Number of Bedrooms Filter */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs">
+                <label className="font-semibold text-slate-700 flex items-center gap-1">
+                  <BedDouble className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Number of Bedrooms</span>
+                </label>
+                <span className="font-semibold text-slate-600 font-mono text-[11px]">
+                  {!filters.bedrooms || filters.bedrooms.length === 0 || filters.bedrooms.includes(0)
+                    ? 'All Bedrooms'
+                    : filters.bedrooms.map((b) => (b >= 5 ? '5+ Beds' : `${b} Bed`)).join(', ')}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[
+                  { label: 'All Beds', value: 0 },
+                  { label: '1 Bed', value: 1 },
+                  { label: '2 Beds', value: 2 },
+                  { label: '3 Beds', value: 3 },
+                  { label: '4 Beds', value: 4 },
+                  { label: '5+ Beds', value: 5 }
+                ].map((item) => {
+                  const isSelected = item.value === 0
+                    ? !filters.bedrooms || filters.bedrooms.length === 0 || filters.bedrooms.includes(0)
+                    : filters.bedrooms && filters.bedrooms.includes(item.value);
+                  return (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => toggleBedroomFilter(item.value)}
+                      className={`py-1.5 px-2 rounded-lg text-xs font-medium border transition-colors ${
+                        isSelected
+                          ? 'border-rose-500 bg-rose-50 text-rose-700 font-semibold'
+                          : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Floor Area / Size Filter */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs">
+                <label className="font-semibold text-slate-700 flex items-center gap-1">
+                  <Maximize2 className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Floor Area / Size</span>
+                </label>
+                <span className="font-mono font-semibold text-slate-700 tabular-nums text-[11px]">
+                  {filters.sizeSqftMin.toLocaleString()} – {filters.sizeSqftMax.toLocaleString()} sqft
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-500 font-mono">
+                Equivalent to ~{Math.round(filters.sizeSqftMin / 10.764)} – {Math.round(filters.sizeSqftMax / 10.764)} m²
+              </div>
+              {/* Quick Size Presets */}
+              <div className="grid grid-cols-3 gap-1 pt-0.5">
+                {[
+                  { label: 'All Sizes', min: 300, max: 3500 },
+                  { label: '< 600 sqft', min: 300, max: 600 },
+                  { label: '600–1,000', min: 600, max: 1000 },
+                  { label: '1,000–1,500', min: 1000, max: 1500 },
+                  { label: '1,500–2,000', min: 1500, max: 2000 },
+                  { label: '> 2,000 sqft', min: 2000, max: 3500 }
+                ].map((preset) => {
+                  const isActive =
+                    filters.sizeSqftMin === preset.min && filters.sizeSqftMax === preset.max;
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => handleSizePreset(preset.min, preset.max)}
+                      className={`py-1 px-1.5 rounded-md text-[11px] font-medium border transition-colors ${
+                        isActive
+                          ? 'border-rose-500 bg-rose-50 text-rose-700 font-semibold'
+                          : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Dual Sliders */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div>
+                  <div className="text-[10px] text-slate-500 font-medium">Min: {filters.sizeSqftMin} sqft</div>
+                  <input
+                    type="range"
+                    min="300"
+                    max="2000"
+                    step="50"
+                    value={filters.sizeSqftMin}
+                    onChange={(e) =>
+                      onFilterChange({
+                        ...filters,
+                        sizeSqftMin: Math.min(Number(e.target.value), filters.sizeSqftMax - 50)
+                      })
+                    }
+                    className="w-full accent-rose-500"
+                  />
+                </div>
+                <div>
+                  <div className="text-[10px] text-slate-500 font-medium">Max: {filters.sizeSqftMax} sqft</div>
+                  <input
+                    type="range"
+                    min="600"
+                    max="3500"
+                    step="50"
+                    value={filters.sizeSqftMax}
+                    onChange={(e) =>
+                      onFilterChange({
+                        ...filters,
+                        sizeSqftMax: Math.max(Number(e.target.value), filters.sizeSqftMin + 50)
+                      })
+                    }
+                    className="w-full accent-rose-500"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Price Budget Range */}

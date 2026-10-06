@@ -2,10 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { 
   X, Building2, Calendar, Clock, Navigation, Calculator, 
   MapPin, Footprints, Car, Train, Bus, ArrowRightLeft, 
-  Search, Check, ExternalLink, Compass 
+  Search, Check, ExternalLink, Compass, BedDouble, History, Sparkles 
 } from 'lucide-react';
 import { PropertyTransaction, GeolocationState, OneMapRouteResult } from '../types/property';
-import { formatCurrency, formatNumber } from '../utils/propertyMath';
+import { formatCurrency, formatNumber, getLatestTransactionsByBedroom } from '../utils/propertyMath';
 import { fetchOneMapRoute, searchOneMap, OneMapSearchResult } from '../services/oneMapService';
 import { getNearbyTransit, SINGAPORE_MRT_LRT } from '../data/transitData';
 
@@ -15,6 +15,7 @@ interface TransactionDetailModalProps {
   userLocation: GeolocationState | null;
   onSelectForPlanner: (property: PropertyTransaction) => void;
   onRouteCalculated?: (route: OneMapRouteResult) => void;
+  allTransactions?: PropertyTransaction[];
 }
 
 export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
@@ -22,12 +23,20 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   onClose,
   userLocation,
   onSelectForPlanner,
-  onRouteCalculated
+  onRouteCalculated,
+  allTransactions = []
 }) => {
   const [routeType, setRouteType] = useState<'walk' | 'drive'>('walk');
   const [loadingRoute, setLoadingRoute] = useState(false);
   const [activeRoute, setActiveRoute] = useState<OneMapRouteResult | null>(null);
   const [routeError, setRouteError] = useState<string | null>(null);
+  const [selectedBedroomFilter, setSelectedBedroomFilter] = useState<number | 'ALL'>('ALL');
+
+  // Compute latest 3 transactions by bedroom type for this property/development
+  const bedroomGroups = useMemo(() => {
+    if (!transaction) return [];
+    return getLatestTransactionsByBedroom(transaction, allTransactions);
+  }, [transaction, allTransactions]);
 
   // Routing location configuration
   const [originMode, setOriginMode] = useState<'user' | 'custom'>('user');
@@ -257,6 +266,152 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                   {transaction.unitRange ? `Storey ${transaction.unitRange}` : 'Standard Floor'}
                 </span>
               </div>
+            </div>
+          </div>
+
+          {/* Latest 3 Transactions by Bedroom Type */}
+          <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3.5 shadow-2xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-rose-50 text-rose-600">
+                  <BedDouble className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                    <span>Latest Transactions by Bedroom Type</span>
+                    <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                      Latest 3 / Bed Type
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Historical done prices, dates, floor levels, and sizes across bedroom types for this development
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bedroom Filter Tabs */}
+            {bedroomGroups.length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedBedroomFilter('ALL')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors border ${
+                    selectedBedroomFilter === 'ALL'
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  All Types ({bedroomGroups.reduce((acc, g) => acc + g.transactions.length, 0)})
+                </button>
+                {bedroomGroups.map((group) => (
+                  <button
+                    key={group.bedroomCount}
+                    type="button"
+                    onClick={() => setSelectedBedroomFilter(group.bedroomCount)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors border flex items-center gap-1.5 ${
+                      selectedBedroomFilter === group.bedroomCount
+                        ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>{group.bedroomLabel}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                        selectedBedroomFilter === group.bedroomCount
+                          ? 'bg-white/25 text-white'
+                          : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {group.transactions.length}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Bedroom Groups Listing */}
+            <div className="space-y-3 pt-1">
+              {bedroomGroups
+                .filter((g) => selectedBedroomFilter === 'ALL' || selectedBedroomFilter === g.bedroomCount)
+                .map((group) => (
+                  <div
+                    key={group.bedroomCount}
+                    className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 space-y-2.5"
+                  >
+                    {/* Bedroom Category Header with averages */}
+                    <div className="flex items-center justify-between text-xs pb-1.5 border-b border-slate-200/70">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900">{group.bedroomLabel}</span>
+                        <span className="text-[11px] text-slate-500 font-mono">
+                          ~{group.avgSqft} sqft ({Math.round(group.avgSqft / 10.764)} m²)
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[11px] text-slate-500">Benchmark Avg: </span>
+                        <span className="font-bold text-slate-900 font-mono">
+                          {formatCurrency(group.avgPrice)}
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-mono ml-1.5">
+                          (${formatNumber(group.avgPsf)} psf)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Table of up to 3 latest transactions */}
+                    <div className="space-y-1.5">
+                      {group.transactions.map((tx, idx) => (
+                        <div
+                          key={tx.id || idx}
+                          className="p-2.5 rounded-lg bg-white border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:border-rose-300 transition-colors"
+                        >
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2 text-[11px] flex-wrap">
+                              <span className="font-bold text-slate-900 font-mono flex items-center gap-1">
+                                <Calendar className="w-3 h-3 text-slate-400" />
+                                {tx.transactionDate}
+                              </span>
+                              <span className="text-slate-300">·</span>
+                              <span className="text-slate-700 font-medium">
+                                {tx.unitRange ? `Storey ${tx.unitRange}` : 'Mid Floor'}
+                              </span>
+                              <span className="text-slate-300">·</span>
+                              <span className="text-slate-600 font-mono">
+                                {tx.floorAreaSqft} sqft ({tx.floorAreaSqm} m²)
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-slate-500">
+                              {tx.remainingLeaseDisplay || '99-year leasehold'} · {tx.flatTypeOrBeds}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                            <div className="text-left sm:text-right">
+                              <div className="font-bold text-emerald-700 font-mono text-xs">
+                                {formatCurrency(tx.price)}
+                              </div>
+                              <div className="text-[10px] text-slate-500 font-mono">
+                                ${formatNumber(tx.psf)} /sqft
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onSelectForPlanner(tx);
+                                onClose();
+                              }}
+                              className="px-2.5 py-1 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[11px] transition-colors flex items-center gap-1"
+                              title="Plan mortgage for this specific unit transaction"
+                            >
+                              <Calculator className="w-3 h-3 text-rose-600" />
+                              <span>Plan</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
 
