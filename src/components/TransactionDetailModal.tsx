@@ -8,7 +8,6 @@ interface TransactionDetailModalProps {
   transaction: PropertyTransaction | null;
   onClose: () => void;
   userLocation: GeolocationState | null;
-  oneMapToken: string;
   onSelectForPlanner: (property: PropertyTransaction) => void;
   onRouteCalculated?: (route: OneMapRouteResult) => void;
 }
@@ -17,32 +16,32 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   transaction,
   onClose,
   userLocation,
-  oneMapToken,
   onSelectForPlanner,
   onRouteCalculated
 }) => {
   const [routeType, setRouteType] = useState<'walk' | 'drive'>('walk');
   const [loadingRoute, setLoadingRoute] = useState(false);
   const [activeRoute, setActiveRoute] = useState<OneMapRouteResult | null>(null);
+  const [routeError, setRouteError] = useState<string | null>(null);
 
   if (!transaction) return null;
 
   const handleCalculateRoute = async (mode: 'walk' | 'drive') => {
     if (!userLocation || userLocation.status !== 'located') {
-      alert('Please click "Detect Location" first to enable routing from your current position.');
+      setRouteError('Please click "Detect Location" in the top bar first to enable routing.');
       return;
     }
 
     setRouteType(mode);
     setLoadingRoute(true);
+    setRouteError(null);
     try {
       const res = await fetchOneMapRoute(
         userLocation.lat,
         userLocation.lng,
         transaction.coordinates.lat,
         transaction.coordinates.lng,
-        mode,
-        oneMapToken
+        mode
       );
       setActiveRoute(res);
       if (onRouteCalculated) {
@@ -238,6 +237,12 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                   <span>Route Drive</span>
                 </button>
               </div>
+
+              {routeError && (
+                <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-800 text-[11px] text-rose-300">
+                  {routeError}
+                </div>
+              )}
 
               {activeRoute && (
                 <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs flex items-center justify-between">

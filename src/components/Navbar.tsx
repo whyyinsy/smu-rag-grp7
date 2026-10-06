@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, Key, Navigation, Loader2 } from 'lucide-react';
+import { Compass, Navigation, Loader2 } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: 'map' | 'trends' | 'planner';
@@ -7,8 +7,6 @@ interface NavbarProps {
   onDetectLocation: () => void;
   isLocating: boolean;
   hasLocation: boolean;
-  hasOneMapToken: boolean;
-  onOpenTokenModal: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -16,9 +14,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   onDetectLocation,
   isLocating,
-  hasLocation,
-  hasOneMapToken,
-  onOpenTokenModal
+  hasLocation
 }) => {
   return (
     <header className="h-14 border-b border-slate-800 bg-slate-950/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 select-none">
@@ -63,27 +59,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
       </nav>
 
-      {/* Zone 3: 1-2 primary actions */}
+      {/* Zone 3: primary action */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* OneMap Token Button */}
-        <button
-          onClick={onOpenTokenModal}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors whitespace-nowrap ${
-            hasOneMapToken
-              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
-              : 'border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800'
-          }`}
-          title="Configure official OneMap token for reverse geocode & routing"
-        >
-          <Key className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">OneMap Token</span>
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              hasOneMapToken ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-            }`}
-          />
-        </button>
-
         {/* Locate Me Button */}
         <button
           onClick={onDetectLocation}

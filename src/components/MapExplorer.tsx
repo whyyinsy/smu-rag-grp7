@@ -21,7 +21,6 @@ interface MapExplorerProps {
   activeRoute: OneMapRouteResult | null;
   onTriggerLocate: () => void;
   isLocating: boolean;
-  oneMapToken: string;
 }
 
 type TileTheme = 'onemap_default' | 'onemap_night' | 'onemap_grey' | 'carto_dark';
@@ -34,8 +33,7 @@ export const MapExplorer: React.FC<MapExplorerProps> = ({
   onSelectTransaction,
   activeRoute,
   onTriggerLocate,
-  isLocating,
-  oneMapToken
+  isLocating
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -242,7 +240,7 @@ export const MapExplorer: React.FC<MapExplorerProps> = ({
     setShowResultsDropdown(true);
 
     try {
-      const results = await searchOneMap(searchVal, oneMapToken);
+      const results = await searchOneMap(searchVal);
       setSearchResults(results);
     } catch (err) {
       console.error(err);

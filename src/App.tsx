@@ -9,7 +9,6 @@ import { MapExplorer } from './components/MapExplorer';
 import { PriceTrendChart } from './components/PriceTrendChart';
 import { PurchasePlanner } from './components/PurchasePlanner';
 import { TransactionDetailModal } from './components/TransactionDetailModal';
-import { OneMapTokenModal } from './components/OneMapTokenModal';
 
 import { 
   PropertyTransaction, GeolocationState, FilterState, 
@@ -17,10 +16,7 @@ import {
 } from './types/property';
 import { INITIAL_TRANSACTIONS } from './data/sampleTransactions';
 import { fetchHdbTransactions } from './services/dataGovService';
-import { 
-  getStoredOneMapToken, setStoredOneMapToken, 
-  reverseGeocode 
-} from './services/oneMapService';
+import { reverseGeocode } from './services/oneMapService';
 import { calculateDistanceMeters } from './utils/propertyMath';
 
 export default function App() {
@@ -28,9 +24,6 @@ export default function App() {
   const [transactions, setTransactions] = useState<PropertyTransaction[]>(INITIAL_TRANSACTIONS);
   const [selectedTransaction, setSelectedTransaction] = useState<PropertyTransaction | null>(null);
   const [plannerProperty, setPlannerProperty] = useState<PropertyTransaction | null>(null);
-  
-  const [oneMapToken, setOneMapToken] = useState<string>('');
-  const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
   
   const [userLocation, setUserLocation] = useState<GeolocationState | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -51,15 +44,7 @@ export default function App() {
     searchQuery: ''
   });
 
-  // Load stored token on mount
-  useEffect(() => {
-    const token = getStoredOneMapToken();
-    if (token) {
-      setOneMapToken(token);
-    }
-  }, []);
-
-  // Fetch initial live HDB records from data.gov.sg
+  // Fetch initial live HDB records from backend API
   useEffect(() => {
     let isCancelled = false;
     async function loadLiveHdb() {
@@ -130,13 +115,12 @@ export default function App() {
           latitude >= 1.15 && latitude <= 1.48 && longitude >= 103.6 && longitude <= 104.1;
 
         // If user is running outside Singapore, center them at a landmark (Raffles Place / Central Area)
-        // while displaying their simulated position or exact GPS
         const activeLat = isNearSingapore ? latitude : 1.2834;
         const activeLng = isNearSingapore ? longitude : 103.8507;
 
         let addressDetails;
         try {
-          addressDetails = await reverseGeocode(activeLat, activeLng, oneMapToken);
+          addressDetails = await reverseGeocode(activeLat, activeLng);
         } catch {
           // ignore
         }
@@ -158,7 +142,7 @@ export default function App() {
         const fallbackLng = 103.8507;
         let addressDetails;
         try {
-          addressDetails = await reverseGeocode(fallbackLat, fallbackLng, oneMapToken);
+          addressDetails = await reverseGeocode(fallbackLat, fallbackLng);
         } catch {
           // ignore
         }
@@ -177,13 +161,7 @@ export default function App() {
         maximumAge: 60000
       }
     );
-  }, [oneMapToken]);
-
-  // Handle Token Save
-  const handleSaveToken = (token: string) => {
-    setOneMapToken(token);
-    setStoredOneMapToken(token);
-  };
+  }, []);
 
   // Filter and sort transactions
   const filteredTransactions = useMemo(() => {
@@ -277,8 +255,6 @@ export default function App() {
         onDetectLocation={handleDetectLocation}
         isLocating={isLocating}
         hasLocation={userLocation?.status === 'located'}
-        hasOneMapToken={Boolean(oneMapToken)}
-        onOpenTokenModal={() => setIsTokenModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -293,7 +269,6 @@ export default function App() {
             activeRoute={activeRoute}
             onTriggerLocate={handleDetectLocation}
             isLocating={isLocating}
-            oneMapToken={oneMapToken}
           />
         )}
 
@@ -314,17 +289,8 @@ export default function App() {
         transaction={selectedTransaction}
         onClose={() => setSelectedTransaction(null)}
         userLocation={userLocation}
-        oneMapToken={oneMapToken}
         onSelectForPlanner={handleSelectForPlanner}
         onRouteCalculated={(route) => setActiveRoute(route)}
-      />
-
-      {/* OneMap Token Configuration Modal */}
-      <OneMapTokenModal
-        isOpen={isTokenModalOpen}
-        onClose={() => setIsTokenModalOpen(false)}
-        token={oneMapToken}
-        onSaveToken={handleSaveToken}
       />
     </div>
   );
