@@ -1,0 +1,6 @@
+{
+  "name": "SG Property Navigator - Geolocation & Resale Market Visualizer",
+  "description": "Interactive Singapore property market visualizer marrying HDB and condominium transactions with OneMap geolocation, price trend analytics, and purchase planning tools.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
