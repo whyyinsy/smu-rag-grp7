@@ -25,10 +25,17 @@ export default function App() {
   const [selectedTransaction, setSelectedTransaction] = useState<PropertyTransaction | null>(null);
   const [plannerProperty, setPlannerProperty] = useState<PropertyTransaction | null>(null);
   
-  const [userLocation, setUserLocation] = useState<GeolocationState | null>(null);
+  // Default to Singapore CBD / detected location with located status so 5km filter works out of the box
+  const [userLocation, setUserLocation] = useState<GeolocationState>({
+    lat: 1.2841,
+    lng: 103.8515,
+    status: 'located',
+    address: { formatted: 'Raffles Place, Singapore CBD' }
+  });
   const [isLocating, setIsLocating] = useState(false);
   const [activeRoute, setActiveRoute] = useState<OneMapRouteResult | null>(null);
 
+  // Default view: 5KM radius around user area, past 12 months
   const [filters, setFilters] = useState<FilterState>({
     propertyTypes: ['HDB', 'CONDO', 'EC'],
     town: 'ALL',
@@ -39,41 +46,14 @@ export default function App() {
     sizeSqftMax: 2500,
     minRemainingLeaseYears: 0,
     tenureType: 'ALL',
-    radiusKm: 0,
+    radiusKm: 5, // Default view ~5KM range
+    timeRangeMonths: 12, // Default past 12 months
     sortBy: 'date_desc',
     searchQuery: ''
   });
 
-  // Fetch initial live HDB records from backend API
+  // Calculate distance on initial load and update
   useEffect(() => {
-    let isCancelled = false;
-    async function loadLiveHdb() {
-      try {
-        const res = await fetchHdbTransactions({
-          limit: 25,
-          sort: 'month desc'
-        });
-        if (!isCancelled && res.transactions.length > 0) {
-          setTransactions((prev) => {
-            const existingIds = new Set(prev.map((t) => t.id));
-            const newOnes = res.transactions.filter((t) => !existingIds.has(t.id));
-            return [...prev, ...newOnes];
-          });
-        }
-      } catch (err) {
-        console.warn('Initial live HDB load note (using curated dataset):', err);
-      }
-    }
-    loadLiveHdb();
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
-
-  // Update distance from user whenever userLocation changes
-  useEffect(() => {
-    if (!userLocation || userLocation.status !== 'located') return;
-
     setTransactions((prev) =>
       prev.map((tx) => {
         const dist = calculateDistanceMeters(
@@ -85,27 +65,51 @@ export default function App() {
         return { ...tx, distanceFromUserMeters: dist };
       })
     );
-  }, [userLocation]);
+  }, [userLocation.lat, userLocation.lng]);
+
+  // Fetch initial live HDB records from backend API
+  useEffect(() => {
+    let isCancelled = false;
+    async function loadLiveHdb() {
+      try {
+        const res = await fetchHdbTransactions({
+          limit: 35,
+          sort: 'month desc'
+        });
+        if (!isCancelled && res.transactions.length > 0) {
+          setTransactions((prev) => {
+            const existingIds = new Set(prev.map((t) => t.id));
+            const newOnes = res.transactions
+              .filter((t) => !existingIds.has(t.id))
+              .map((t) => ({
+                ...t,
+                distanceFromUserMeters: calculateDistanceMeters(
+                  userLocation.lat,
+                  userLocation.lng,
+                  t.coordinates.lat,
+                  t.coordinates.lng
+                )
+              }));
+            return [...prev, ...newOnes];
+          });
+        }
+      } catch (err) {
+        console.warn('Initial live HDB load note (using curated dataset):', err);
+      }
+    }
+    loadLiveHdb();
+    return () => {
+      isCancelled = true;
+    };
+  }, [userLocation.lat, userLocation.lng]);
 
   // Geolocation detector handler
   const handleDetectLocation = useCallback(async () => {
     if (!navigator.geolocation) {
-      setUserLocation({
-        lat: 1.2834,
-        lng: 103.8507,
-        status: 'error',
-        errorMessage: 'Geolocation is not supported by your browser.'
-      });
       return;
     }
 
     setIsLocating(true);
-    setUserLocation((prev) => ({
-      lat: prev?.lat || 1.3521,
-      lng: prev?.lng || 103.8198,
-      status: 'detecting'
-    }));
-
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
@@ -114,9 +118,8 @@ export default function App() {
         const isNearSingapore =
           latitude >= 1.15 && latitude <= 1.48 && longitude >= 103.6 && longitude <= 104.1;
 
-        // If user is running outside Singapore, center them at a landmark (Raffles Place / Central Area)
-        const activeLat = isNearSingapore ? latitude : 1.2834;
-        const activeLng = isNearSingapore ? longitude : 103.8507;
+        const activeLat = isNearSingapore ? latitude : 1.2841;
+        const activeLng = isNearSingapore ? longitude : 103.8515;
 
         let addressDetails;
         try {
@@ -136,32 +139,21 @@ export default function App() {
         setIsLocating(false);
       },
       async (err) => {
-        console.warn('Geolocation error / permission denied, defaulting to Singapore CBD:', err.message);
-        // Fallback to Singapore CBD (Raffles Place)
-        const fallbackLat = 1.2834;
-        const fallbackLng = 103.8507;
-        let addressDetails;
-        try {
-          addressDetails = await reverseGeocode(fallbackLat, fallbackLng);
-        } catch {
-          // ignore
-        }
-
-        setUserLocation({
-          lat: fallbackLat,
-          lng: fallbackLng,
-          status: 'located',
-          address: addressDetails || { formatted: 'Raffles Place, Singapore CBD' }
-        });
+        console.warn('Geolocation permission not granted / error, maintaining Singapore center:', err.message);
         setIsLocating(false);
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 8000,
         maximumAge: 60000
       }
     );
   }, []);
+
+  // Try browser GPS on initial mount
+  useEffect(() => {
+    handleDetectLocation();
+  }, [handleDetectLocation]);
 
   // Filter and sort transactions
   const filteredTransactions = useMemo(() => {
@@ -173,6 +165,12 @@ export default function App() {
         // Town
         if (filters.town !== 'ALL' && tx.town.toUpperCase() !== filters.town.toUpperCase()) {
           return false;
+        }
+
+        // Time Range (Past 12 Months: from 2025-10 onwards for 2026-10)
+        if (filters.timeRangeMonths > 0) {
+          const minMonth = '2025-10';
+          if (tx.transactionDate < minMonth) return false;
         }
 
         // Price
@@ -197,9 +195,9 @@ export default function App() {
           }
         }
 
-        // Radius filter from user location
-        if (filters.radiusKm > 0 && userLocation && userLocation.status === 'located') {
-          if (!tx.distanceFromUserMeters || tx.distanceFromUserMeters > filters.radiusKm * 1000) {
+        // Radius filter from user location (Default: 5KM)
+        if (filters.radiusKm > 0) {
+          if (tx.distanceFromUserMeters === undefined || tx.distanceFromUserMeters > filters.radiusKm * 1000) {
             return false;
           }
         }
@@ -238,7 +236,7 @@ export default function App() {
             return 0;
         }
       });
-  }, [transactions, filters, userLocation]);
+  }, [transactions, filters]);
 
   // Plan purchase for specific unit
   const handleSelectForPlanner = (property: PropertyTransaction) => {
@@ -247,7 +245,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
       {/* Top Bar Navigation */}
       <Navbar
         activeTab={activeTab}

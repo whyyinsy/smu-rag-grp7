@@ -66,7 +66,8 @@ export interface FilterState {
   sizeSqftMax: number;
   minRemainingLeaseYears: number;
   tenureType: 'ALL' | 'Freehold' | '99-year' | '999-year';
-  radiusKm: number; // 0 means no radius filter
+  radiusKm: number; // 0 means no radius filter, 5 is default ~5km
+  timeRangeMonths: number; // default 12 months
   sortBy: 'date_desc' | 'date_asc' | 'price_asc' | 'price_desc' | 'psf_asc' | 'psf_desc' | 'distance_asc';
   searchQuery: string;
 }

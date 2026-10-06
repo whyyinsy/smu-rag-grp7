@@ -17,15 +17,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   hasLocation
 }) => {
   return (
-    <header className="h-14 border-b border-slate-800 bg-slate-950/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 select-none">
+    <header className="h-14 border-b border-slate-200 bg-white/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 select-none shadow-xs">
       {/* Zone 1: Single text element wordmark */}
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500">
+        <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
           <Compass className="w-4 h-4" />
         </div>
         <button
           onClick={() => setActiveTab('map')}
-          className="text-base sm:text-lg font-bold tracking-tight text-white hover:text-rose-400 transition-colors whitespace-nowrap"
+          className="text-base sm:text-lg font-bold tracking-tight text-slate-900 hover:text-rose-600 transition-colors whitespace-nowrap"
         >
           SG Property Navigator
         </button>
@@ -36,7 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           onClick={() => setActiveTab('map')}
           className={`transition-colors whitespace-nowrap ${
-            activeTab === 'map' ? 'text-rose-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            activeTab === 'map' ? 'text-rose-600 font-bold' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           Map Explorer
@@ -44,7 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           onClick={() => setActiveTab('trends')}
           className={`transition-colors whitespace-nowrap ${
-            activeTab === 'trends' ? 'text-rose-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            activeTab === 'trends' ? 'text-rose-600 font-bold' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           Market Trends
@@ -52,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           onClick={() => setActiveTab('planner')}
           className={`transition-colors whitespace-nowrap ${
-            activeTab === 'planner' ? 'text-rose-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            activeTab === 'planner' ? 'text-rose-600 font-bold' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           Financial Planner
@@ -65,10 +65,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           onClick={onDetectLocation}
           disabled={isLocating}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap shadow-xs ${
             hasLocation
-              ? 'bg-rose-600 text-white hover:bg-rose-500 shadow-sm shadow-rose-900/40'
-              : 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700'
+              ? 'bg-rose-600 text-white hover:bg-rose-500'
+              : 'bg-slate-900 text-white hover:bg-slate-800'
           }`}
         >
           {isLocating ? (

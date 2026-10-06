@@ -16,28 +16,28 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(241, 245, 249, 0.8);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(71, 85, 105, 0.4);
+  background: rgba(203, 213, 225, 0.8);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.6);
+  background: rgba(148, 163, 184, 0.9);
 }
 
-/* Leaflet dark styling */
+/* Leaflet light styling */
 .leaflet-container {
-  background-color: #0b0f19 !important;
+  background-color: #f8fafc !important;
   font-family: inherit !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: rgba(15, 23, 42, 0.95) !important;
-  color: #f1f5f9 !important;
-  border: 1px solid rgba(51, 65, 85, 0.5) !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
-  border-radius: 12px !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+  border-radius: 14px !important;
   padding: 0 !important;
 }
 
@@ -47,32 +47,32 @@
 }
 
 .leaflet-popup-tip {
-  background: rgba(15, 23, 42, 0.95) !important;
-  border: 1px solid rgba(51, 65, 85, 0.5) !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
 .leaflet-popup-close-button {
-  color: #94a3b8 !important;
-  padding: 6px 8px !important;
+  color: #64748b !important;
+  padding: 8px 10px !important;
 }
 .leaflet-popup-close-button:hover {
-  color: #f8fafc !important;
+  color: #0f172a !important;
 }
 
 .leaflet-bar {
-  border: 1px solid rgba(51, 65, 85, 0.6) !important;
-  border-radius: 8px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
   overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06) !important;
 }
 
 .leaflet-bar a {
-  background-color: rgba(15, 23, 42, 0.9) !important;
-  color: #cbd5e1 !important;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.4) !important;
+  background-color: #ffffff !important;
+  color: #334155 !important;
+  border-bottom: 1px solid #f1f5f9 !important;
 }
 
 .leaflet-bar a:hover {
-  background-color: rgba(30, 41, 59, 1) !important;
-  color: #ffffff !important;
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
 }

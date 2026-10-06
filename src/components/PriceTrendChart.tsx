@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, BarChart3, Calendar, Layers, ArrowUpRight, ShieldCheck, DollarSign } from 'lucide-react';
+import { TrendingUp, BarChart3, Calendar, Layers, ArrowUpRight, DollarSign } from 'lucide-react';
 import { HISTORICAL_PRICE_TRENDS } from '../data/sampleTransactions';
 import { formatCurrency, formatNumber } from '../utils/propertyMath';
 
@@ -32,52 +32,49 @@ export const PriceTrendChart: React.FC = () => {
   const hdbPath = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getYPsf(d.hdbAvgPsf)}`).join(' ');
   // Generate SVG path for Condo PSF
   const condoPath = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getYPsf(d.condoAvgPsf)}`).join(' ');
-  // Generate SVG path for Overall PSF
-  const overallPath = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getYPsf(d.overallAvgPsf)}`).join(' ');
 
   // Compute stats
   const firstPoint = data[0];
   const lastPoint = data[data.length - 1];
-  const totalVolumeInHistory = data.reduce((acc, curr) => acc + curr.volume, 0);
   const hdbPsfChange = (((lastPoint.hdbAvgPsf - firstPoint.hdbAvgPsf) / firstPoint.hdbAvgPsf) * 100).toFixed(1);
   const condoPsfChange = (((lastPoint.condoAvgPsf - firstPoint.condoAvgPsf) / firstPoint.condoAvgPsf) * 100).toFixed(1);
 
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto space-y-6">
       {/* Header and Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-rose-500" />
             Singapore Residential Price Trend & Transaction Volume
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Historical quarterly price evolution ($/psf) and resale volume across HDB and Private Condominium markets.
           </p>
         </div>
 
         {/* View Mode Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-slate-900 border border-slate-800 rounded-xl shrink-0 self-start sm:self-auto">
+        <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-xl shrink-0 self-start sm:self-auto">
           <button
             onClick={() => setViewMode('compare')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              viewMode === 'compare' ? 'bg-slate-800 text-white font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200'
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              viewMode === 'compare' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             HDB vs Condo
           </button>
           <button
             onClick={() => setViewMode('hdb')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              viewMode === 'hdb' ? 'bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/40' : 'text-slate-400 hover:text-slate-200'
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              viewMode === 'hdb' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             HDB Resale
           </button>
           <button
             onClick={() => setViewMode('condo')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              viewMode === 'condo' ? 'bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/40' : 'text-slate-400 hover:text-slate-200'
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              viewMode === 'condo' ? 'bg-rose-50 text-rose-700 border border-rose-200 shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Condominiums
@@ -87,70 +84,70 @@ export const PriceTrendChart: React.FC = () => {
 
       {/* Snapshot Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-1">
-          <div className="text-xs text-slate-400">Current HDB Avg PSF</div>
-          <div className="text-xl font-bold font-mono text-emerald-400 tabular-nums">
+        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-1">
+          <div className="text-xs font-medium text-slate-500">Current HDB Avg PSF</div>
+          <div className="text-xl font-bold font-mono text-emerald-600 tabular-nums">
             ${lastPoint.hdbAvgPsf}
             <span className="text-xs font-normal text-slate-400">/sqft</span>
           </div>
-          <div className="text-[11px] text-emerald-500 font-mono flex items-center gap-0.5">
+          <div className="text-[11px] text-emerald-600 font-semibold font-mono flex items-center gap-0.5">
             <ArrowUpRight className="w-3 h-3" />
             <span>+{hdbPsfChange}% since 2024</span>
           </div>
         </div>
 
-        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-1">
-          <div className="text-xs text-slate-400">Current Condo Avg PSF</div>
-          <div className="text-xl font-bold font-mono text-rose-400 tabular-nums">
+        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-1">
+          <div className="text-xs font-medium text-slate-500">Current Condo Avg PSF</div>
+          <div className="text-xl font-bold font-mono text-rose-600 tabular-nums">
             ${lastPoint.condoAvgPsf}
             <span className="text-xs font-normal text-slate-400">/sqft</span>
           </div>
-          <div className="text-[11px] text-rose-500 font-mono flex items-center gap-0.5">
+          <div className="text-[11px] text-rose-600 font-semibold font-mono flex items-center gap-0.5">
             <ArrowUpRight className="w-3 h-3" />
             <span>+{condoPsfChange}% since 2024</span>
           </div>
         </div>
 
-        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-1">
-          <div className="text-xs text-slate-400">Quarterly Volume (Active)</div>
-          <div className="text-xl font-bold font-mono text-white tabular-nums">
+        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-1">
+          <div className="text-xs font-medium text-slate-500">Quarterly Volume (Active)</div>
+          <div className="text-xl font-bold font-mono text-slate-900 tabular-nums">
             {formatNumber(activeDataPoint.volume)}
-            <span className="text-xs font-normal text-slate-400"> units</span>
+            <span className="text-xs font-normal text-slate-500"> units</span>
           </div>
-          <div className="text-[11px] text-slate-400 font-mono">
+          <div className="text-[11px] text-slate-500 font-mono">
             HDB: {formatNumber(activeDataPoint.hdbVolume)} · Condo: {formatNumber(activeDataPoint.condoVolume)}
           </div>
         </div>
 
-        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-1">
-          <div className="text-xs text-slate-400">Average Unit Price</div>
-          <div className="text-xl font-bold font-mono text-sky-400 tabular-nums">
+        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-1">
+          <div className="text-xs font-medium text-slate-500">Average Transacted Price</div>
+          <div className="text-xl font-bold font-mono text-sky-600 tabular-nums">
             {formatCurrency(activeDataPoint.averagePrice)}
           </div>
-          <div className="text-[11px] text-slate-400 font-mono">
+          <div className="text-[11px] text-slate-500 font-mono">
             Period: {activeDataPoint.period}
           </div>
         </div>
       </div>
 
       {/* Main Interactive Chart Card */}
-      <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-4">
+      <div className="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-4 text-slate-400">
+          <div className="flex items-center gap-4 text-slate-600 font-medium">
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-1 bg-emerald-400 rounded-full" />
+              <span className="w-3 h-1 bg-emerald-500 rounded-full" />
               <span>HDB Resale PSF</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-1 bg-rose-400 rounded-full" />
+              <span className="w-3 h-1 bg-rose-500 rounded-full" />
               <span>Condo / Private PSF</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 bg-slate-700 rounded-sm" />
+              <span className="w-2.5 h-2.5 bg-slate-300 rounded-xs" />
               <span>Volume (Bars)</span>
             </div>
           </div>
-          <div className="text-slate-400 font-mono">
+          <div className="text-slate-400 font-mono text-[11px]">
             Hover over chart points to inspect quarterly data
           </div>
         </div>
@@ -172,13 +169,13 @@ export const PriceTrendChart: React.FC = () => {
                       y1={y}
                       x2={svgWidth - padding.right}
                       y2={y}
-                      stroke="rgba(51, 65, 85, 0.3)"
+                      stroke="rgba(226, 232, 240, 0.9)"
                       strokeDasharray="3 3"
                     />
                     <text
                       x={padding.left - 10}
                       y={y + 4}
-                      fill="#64748b"
+                      fill="#94a3b8"
                       fontSize="10"
                       textAnchor="end"
                       fontFamily="JetBrains Mono"
@@ -203,7 +200,8 @@ export const PriceTrendChart: React.FC = () => {
                     y={getYVol(d.volume)}
                     width={barWidth}
                     height={Math.max(0, barHeight)}
-                    fill={isHovered ? 'rgba(148, 163, 184, 0.35)' : 'rgba(51, 65, 85, 0.3)'}
+                    fill={isHovered ? 'rgba(203, 213, 225, 0.9)' : 'rgba(241, 245, 249, 0.9)'}
+                    stroke={isHovered ? '#cbd5e1' : '#e2e8f0'}
                     rx="3"
                     className="transition-colors cursor-pointer"
                     onMouseEnter={() => setHoveredIndex(i)}
@@ -216,8 +214,8 @@ export const PriceTrendChart: React.FC = () => {
                 <path
                   d={hdbPath}
                   fill="none"
-                  stroke="#10b981"
-                  strokeWidth="2.5"
+                  stroke="#059669"
+                  strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -228,8 +226,8 @@ export const PriceTrendChart: React.FC = () => {
                 <path
                   d={condoPath}
                   fill="none"
-                  stroke="#f43f5e"
-                  strokeWidth="2.5"
+                  stroke="#e11d48"
+                  strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -251,8 +249,8 @@ export const PriceTrendChart: React.FC = () => {
                         y1={padding.top}
                         x2={x}
                         y2={padding.top + innerHeight}
-                        stroke="#94a3b8"
-                        strokeWidth="1"
+                        stroke="#64748b"
+                        strokeWidth="1.5"
                         strokeDasharray="2 2"
                       />
                     )}
@@ -262,10 +260,10 @@ export const PriceTrendChart: React.FC = () => {
                       <circle
                         cx={x}
                         cy={yHdb}
-                        r={isHovered ? 5 : 3.5}
-                        fill="#10b981"
-                        stroke="#0f172a"
-                        strokeWidth="2"
+                        r={isHovered ? 6 : 4}
+                        fill="#059669"
+                        stroke="#ffffff"
+                        strokeWidth="2.5"
                       />
                     )}
 
@@ -274,10 +272,10 @@ export const PriceTrendChart: React.FC = () => {
                       <circle
                         cx={x}
                         cy={yCondo}
-                        r={isHovered ? 5 : 3.5}
-                        fill="#f43f5e"
-                        stroke="#0f172a"
-                        strokeWidth="2"
+                        r={isHovered ? 6 : 4}
+                        fill="#e11d48"
+                        stroke="#ffffff"
+                        strokeWidth="2.5"
                       />
                     )}
 
@@ -285,7 +283,7 @@ export const PriceTrendChart: React.FC = () => {
                     <text
                       x={x}
                       y={svgHeight - 15}
-                      fill={isHovered ? '#f8fafc' : '#64748b'}
+                      fill={isHovered ? '#0f172a' : '#64748b'}
                       fontSize="10"
                       textAnchor="middle"
                       fontFamily="JetBrains Mono"
@@ -302,27 +300,27 @@ export const PriceTrendChart: React.FC = () => {
 
         {/* Hover Detail Strip */}
         {activeDataPoint && (
-          <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex flex-wrap items-center justify-between gap-4 text-xs">
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap items-center justify-between gap-4 text-xs">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-rose-400" />
-              <span className="font-bold text-white font-mono">{activeDataPoint.period}</span>
+              <Calendar className="w-4 h-4 text-rose-500" />
+              <span className="font-bold text-slate-900 font-mono text-sm">{activeDataPoint.period}</span>
             </div>
-            <div className="flex items-center gap-4 font-mono tabular-nums">
+            <div className="flex items-center gap-4 font-mono tabular-nums text-slate-700">
               <div>
-                <span className="text-slate-400">HDB Avg: </span>
-                <span className="font-semibold text-emerald-400">${activeDataPoint.hdbAvgPsf}/psf</span>
+                <span className="text-slate-500">HDB Avg: </span>
+                <span className="font-bold text-emerald-700">${activeDataPoint.hdbAvgPsf}/psf</span>
               </div>
               <div>
-                <span className="text-slate-400">Condo Avg: </span>
-                <span className="font-semibold text-rose-400">${activeDataPoint.condoAvgPsf}/psf</span>
+                <span className="text-slate-500">Condo Avg: </span>
+                <span className="font-bold text-rose-700">${activeDataPoint.condoAvgPsf}/psf</span>
               </div>
               <div>
-                <span className="text-slate-400">Total Volume: </span>
-                <span className="font-semibold text-white">{formatNumber(activeDataPoint.volume)} sales</span>
+                <span className="text-slate-500">Total Volume: </span>
+                <span className="font-bold text-slate-900">{formatNumber(activeDataPoint.volume)} sales</span>
               </div>
               <div>
-                <span className="text-slate-400">Mean Price: </span>
-                <span className="font-semibold text-sky-400">{formatCurrency(activeDataPoint.averagePrice)}</span>
+                <span className="text-slate-500">Mean Price: </span>
+                <span className="font-bold text-sky-700">{formatCurrency(activeDataPoint.averagePrice)}</span>
               </div>
             </div>
           </div>
