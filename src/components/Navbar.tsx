@@ -2,8 +2,8 @@ import React from 'react';
 import { Compass, Key, Navigation, Loader2 } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab: 'map' | 'trends' | 'planner' | 'api';
-  setActiveTab: (tab: 'map' | 'trends' | 'planner' | 'api') => void;
+  activeTab: 'map' | 'trends' | 'planner';
+  setActiveTab: (tab: 'map' | 'trends' | 'planner') => void;
   onDetectLocation: () => void;
   isLocating: boolean;
   hasLocation: boolean;
@@ -35,7 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
       </div>
 
-      {/* Zone 2: 4 clean text navigation links */}
+      {/* Zone 2: clean text navigation links */}
       <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
         <button
           onClick={() => setActiveTab('map')}
@@ -59,15 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             activeTab === 'planner' ? 'text-rose-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          Purchase & Sale Planner
-        </button>
-        <button
-          onClick={() => setActiveTab('api')}
-          className={`transition-colors whitespace-nowrap ${
-            activeTab === 'api' ? 'text-rose-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Data.gov.sg Console
+          Financial Planner
         </button>
       </nav>
 

@@ -40,18 +40,38 @@ export async function searchOneMap(
 ): Promise<OneMapSearchResult[]> {
   if (!query || query.trim().length < 2) return [];
 
-  const url = `https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${encodeURIComponent(
-    query.trim()
-  )}&returnGeom=Y&getAddrDetails=Y&pageNum=1`;
-
-  const headers: HeadersInit = {
-    'Accept': 'application/json'
-  };
-
   const activeToken = token || getStoredOneMapToken();
+  const headers: HeadersInit = { 'Accept': 'application/json' };
   if (activeToken) {
     headers['Authorization'] = activeToken.startsWith('Bearer ') ? activeToken : `Bearer ${activeToken}`;
   }
+
+  // 1. Try serverless backend proxy
+  try {
+    const res = await fetch(`/api/onemap/search?searchVal=${encodeURIComponent(query.trim())}`, { headers });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.results && Array.isArray(data.results)) {
+        return data.results.map((item: Record<string, string>) => ({
+          searchVal: item.SEARCHVAL || item.BUILDING || item.ROAD_NAME,
+          blockNo: item.BLK_NO || '',
+          roadName: item.ROAD_NAME || '',
+          building: item.BUILDING || '',
+          address: item.ADDRESS || '',
+          postal: item.POSTAL || '',
+          lat: parseFloat(item.LATITUDE),
+          lng: parseFloat(item.LONGITUDE)
+        })).filter((item: OneMapSearchResult) => !isNaN(item.lat) && !isNaN(item.lng));
+      }
+    }
+  } catch {
+    // fallback to direct OneMap
+  }
+
+  // 2. Direct OneMap fallback
+  const url = `https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${encodeURIComponent(
+    query.trim()
+  )}&returnGeom=Y&getAddrDetails=Y&pageNum=1`;
 
   try {
     const res = await fetch(url, { headers });

@@ -8,7 +8,6 @@ import { Navbar } from './components/Navbar';
 import { MapExplorer } from './components/MapExplorer';
 import { PriceTrendChart } from './components/PriceTrendChart';
 import { PurchasePlanner } from './components/PurchasePlanner';
-import { DataGovConsole } from './components/DataGovConsole';
 import { TransactionDetailModal } from './components/TransactionDetailModal';
 import { OneMapTokenModal } from './components/OneMapTokenModal';
 
@@ -25,7 +24,7 @@ import {
 import { calculateDistanceMeters } from './utils/propertyMath';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'map' | 'trends' | 'planner' | 'api'>('map');
+  const [activeTab, setActiveTab] = useState<'map' | 'trends' | 'planner'>('map');
   const [transactions, setTransactions] = useState<PropertyTransaction[]>(INITIAL_TRANSACTIONS);
   const [selectedTransaction, setSelectedTransaction] = useState<PropertyTransaction | null>(null);
   const [plannerProperty, setPlannerProperty] = useState<PropertyTransaction | null>(null);
@@ -263,15 +262,6 @@ export default function App() {
       });
   }, [transactions, filters, userLocation]);
 
-  // Append new transactions from DataGovConsole
-  const handleAppendTransactions = (newTransactions: PropertyTransaction[]) => {
-    setTransactions((prev) => {
-      const existingIds = new Set(prev.map((t) => t.id));
-      const fresh = newTransactions.filter((t) => !existingIds.has(t.id));
-      return [...fresh, ...prev];
-    });
-  };
-
   // Plan purchase for specific unit
   const handleSelectForPlanner = (property: PropertyTransaction) => {
     setPlannerProperty(property);
@@ -315,13 +305,6 @@ export default function App() {
           <PurchasePlanner
             selectedProperty={plannerProperty}
             onClearSelectedProperty={() => setPlannerProperty(null)}
-          />
-        )}
-
-        {activeTab === 'api' && (
-          <DataGovConsole
-            onAppendTransactions={handleAppendTransactions}
-            onNavigateToMap={() => setActiveTab('map')}
           />
         )}
       </main>
